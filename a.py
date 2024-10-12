@@ -221,7 +221,7 @@ async def main():
     cards_info = read_cc_from_file('cc.txt')
 
     # Limit the number of cards to process (e.g., 30)
-    if len(cards_info) > 30:
+    if len(cards_info) > 3000:
         print("The maximum number of cards allowed is 30. Please reduce the number of cards and try again.")
         return
 
