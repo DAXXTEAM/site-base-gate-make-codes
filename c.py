@@ -131,8 +131,8 @@ def process_card(card_info, sk, pk):
 
 def main():
     # Replace these with actual Stripe keys
-    sk = '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'
-    pk = 'pk_live_51PBixTRoZZkGwFK6C2YcEM1AU1gdr7JqiFkjWPe6AqmflSCCRl8Mmit3Bhpt18b6EGa52W4wCURZDpEIhkWQRraD00oov1prsH'
+    sk = 'sk_live_KjzWOtfIwHqz0NL3IJst2jdM00mHLGE4yP'
+    pk = 'pk_live_jxmBIPfZhjS2OGxIFbZVCRNk00fQPGYnPZ'
 
     try:
         with open(CC_FILE, 'r') as file:
