@@ -21,7 +21,7 @@ proxy_list = [
 
 # Your bot token and the group chat ID where successful hits will be sent
 BOT_TOKEN = "7386696229:AAHmhKvVa03xbWzDgK_vB1HZmBHFo0igAlA"
-GROUP_CHAT_ID = -1002219112781  # Replace with your group chat ID
+GROUP_CHAT_ID = "<your_group_chat_id>"  # Replace with your group chat ID
 
 def round_robin_proxy(proxy_list):
     """Yields proxies from the list in a round-robin fashion."""
@@ -90,7 +90,7 @@ async def check_card(card_info, proxy, profile):
 
         # Simulate a second response check
         second_response = "Simulated response with errors or approvals"
-        result = await second_response  # Replace with actual response from your request
+        result = second_response  # Remove the await, since this is a string now
 
         # Check card status based on the simulated result
         Respo = GetStr(
@@ -221,7 +221,7 @@ async def main():
     cards_info = read_cc_from_file('cc.txt')
 
     # Limit the number of cards to process (e.g., 30)
-    if len(cards_info) > 1000:
+    if len(cards_info) > 30:
         print("The maximum number of cards allowed is 30. Please reduce the number of cards and try again.")
         return
 
@@ -240,3 +240,4 @@ async def main():
 # Run the main function in the event loop
 if __name__ == "__main__":
     asyncio.run(main())
+    
